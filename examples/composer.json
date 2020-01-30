@@ -1,6 +1,7 @@
 {
     "require": {
-        "slim/slim": "^3.0.0"
+        "slim/slim": "^3.0.0",
+        "cache/filesystem-adapter": "^1.0"
     },
     "require-dev": {
         "league/event": "^2.2",

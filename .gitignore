@@ -2,6 +2,7 @@
 /composer.lock
 phpunit.xml
 .idea
+/examples/cache
 /examples/vendor
 examples/public.key
 examples/private.key

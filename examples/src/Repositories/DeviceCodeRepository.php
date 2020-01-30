@@ -13,9 +13,21 @@ use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
 use League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface;
 use OAuth2ServerExamples\Entities\DeviceCodeEntity;
+use OAuth2ServerExamples\Cache\DeviceCodeCache;
 
 class DeviceCodeRepository implements DeviceCodeRepositoryInterface
 {
+
+    protected $deviceCodeCache;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct()
+    {
+        $this->deviceCodeCache = new DeviceCodeCache;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -30,6 +42,7 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
     public function persistNewDeviceCode(DeviceCodeEntityInterface $deviceCodeEntity)
     {
         // Some logic to persist a new device code to a database
+        $this->deviceCodeCache->store($deviceCodeEntity);
     }
 
     /**
@@ -37,10 +50,7 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
      */
     public function getDeviceCodeEntityByDeviceCode($deviceCode, $grantType, ClientEntityInterface $clientEntity)
     {
-        $deviceCode = new DeviceCodeEntity();
-
-        // The user identifier should be set when the user authenticates on the OAuth server
-        $deviceCode->setUserIdentifier(1);
+        $deviceCode = $this->deviceCodeCache->whereDeviceCode($deviceCode);
 
         return $deviceCode;
     }

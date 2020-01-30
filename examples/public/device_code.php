@@ -12,6 +12,7 @@ include __DIR__ . '/../vendor/autoload.php';
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Grant\DeviceCodeGrant;
+use OAuth2ServerExamples\Cache\DeviceCodeCache;
 use OAuth2ServerExamples\Repositories\AccessTokenRepository;
 use OAuth2ServerExamples\Repositories\ClientRepository;
 use OAuth2ServerExamples\Repositories\DeviceCodeRepository;
@@ -45,14 +46,24 @@ $app = new App([
             'lxZFUEsBCJ2Yb14IF2ygAHI5N4+ZAUXXaSeeJm6+twsUmIen'
         );
 
+        // Set up the device code grant
+        $deviceCodeGrant =  new DeviceCodeGrant(
+            $deviceCodeRepository,
+            $refreshTokenRepository,
+            new \DateInterval('PT10M'),
+            5
+        );
+
+        // Set the device code grant verification uri
+        $deviceCodeGrant->setVerificationUri(
+            (string) Slim\Http\Uri::createFromEnvironment(
+                Slim\Http\Environment::mock($_SERVER)
+            )->withPath('device_activate')
+        );
+
         // Enable the device code grant on the server with a token TTL of 1 hour
         $server->enableGrantType(
-            new DeviceCodeGrant(
-                $deviceCodeRepository,
-                $refreshTokenRepository,
-                new \DateInterval('PT10M'),
-                5
-            ),
+            $deviceCodeGrant,
             new \DateInterval('PT1H')
         );
 
@@ -99,6 +110,48 @@ $app->post('/access_token', function (ServerRequestInterface $request, ResponseI
 
         return $response->withStatus(500)->withBody($body);
     }
+});
+
+$app->get('/device_activate', function (ServerRequestInterface $request, ResponseInterface $response) use ($app) {
+    return $response->write(<<<EOD
+        <h1>Oauth2 Device Flow Example</h1>
+        <hr>
+        <form method="POST">
+            <label>Enter Code:</label>
+            <input type="text" name="user_code"/>
+            <button>activate</button>
+        </form>
+    EOD);
+});
+
+$app->post('/device_activate', function (ServerRequestInterface $request, ResponseInterface $response) use ($app) {
+    $deviceCodeCache = new DeviceCodeCache();
+    $userCode = $request->getParsedBody()['user_code'];
+
+    if ($deviceCode = $deviceCodeCache->whereUserCode($userCode)) {
+
+        $deviceCode->setUserIdentifier(1); // auth()->user()->id >> 1
+
+        $deviceCodeCache->store($deviceCode);
+
+        return $response->write(<<<EOD
+            <h1>Oauth2 Device Flow Example</h1>
+            <hr>
+            <p style="color:green;">
+                Device with code: $userCode is activated.
+            </p>
+            <button onclick="window.history.back()">Go Back</button>
+        EOD);
+    }
+
+    return $response->write(<<<EOD
+        <h1>Oauth2 Device Flow Example</h1>
+        <hr>
+        <p style="color:red;">
+            Cannot activate device with code: $userCode.
+        </p>
+        <button onclick="window.history.back()">Go Back</button>
+    EOD);
 });
 
 $app->run();

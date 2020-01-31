@@ -1,7 +1,8 @@
 {
     "require": {
         "slim/slim": "^3.0.0",
-        "cache/filesystem-adapter": "^1.0"
+        "illuminate/cache": "^6.13",
+        "illuminate/filesystem": "^6.13"
     },
     "require-dev": {
         "league/event": "^2.2",

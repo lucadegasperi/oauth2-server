@@ -9,24 +9,21 @@
 
 namespace OAuth2ServerExamples\Cache;
 
-use League\Flysystem\Adapter\Local;
-use League\Flysystem\Filesystem;
-use Cache\Namespaced\NamespacedCachePool;
-use Cache\Adapter\Filesystem\FilesystemCachePool;
+use Illuminate\Cache\FileStore;
+use Illuminate\Filesystem\Filesystem;
 use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
 
 class DeviceCodeCache
 {
-    protected $prefix = 'deviceCode.';
-
     /**
      * @return void
      */
     public function __construct()
     {
-        $this->filesystemAdapter = new Local(__DIR__.'/../../');
-        $this->filesystem  = new Filesystem($this->filesystemAdapter);
-        $this->pool = new FilesystemCachePool($this->filesystem);
+        $this->cache = new FileStore(
+            new Filesystem,
+            __DIR__ . '/../../cache/device_code'
+        );
     }
 
     /**
@@ -36,17 +33,13 @@ class DeviceCodeCache
      */
     public function store($deviceCodeEntity)
     {
-        $mapCache = $this->map();
-        $mapArray = $mapCache->get();
-        $mapArray[$deviceCodeEntity->getUserCode()] = $deviceCodeEntity->getIdentifier();
-        $mapCache->set($mapArray);
+        $cache = [];
 
-        $this->pool->save($mapCache);
+        $deviceCodeSerialized = serialize($deviceCodeEntity);
+        $cache[$deviceCodeEntity->getUserCode()] = $deviceCodeSerialized;
+        $cache[$deviceCodeEntity->getIdentifier()] = $deviceCodeSerialized;
 
-        $deviceCodeCache = $this->pool->getItem($this->prefix . $deviceCodeEntity->getIdentifier());
-        $deviceCodeCache->set(serialize($deviceCodeEntity));
-
-        $this->pool->save($deviceCodeCache);
+        $this->cache->putMany($cache, 60);
     }
 
     /**
@@ -56,9 +49,7 @@ class DeviceCodeCache
      */
     public function whereUserCode($userCode)
     {
-        $map = $this->map()->get();
-
-        return $this->whereDeviceCode($map[$userCode]);
+        return unserialize($this->cache->get($userCode));
     }
 
     /**
@@ -68,15 +59,6 @@ class DeviceCodeCache
      */
     public function whereDeviceCode($deviceCode)
     {
-        $deviceCodeCache = $this->pool->getItem($this->prefix . $deviceCode);
-
-        return unserialize($deviceCodeCache->get());
-    }
-
-    /**
-     * @return array
-     */
-    protected function map() {
-        return $this->pool->getItem($this->prefix . 'map', []);
+        return unserialize($this->cache->get($deviceCode));
     }
 }

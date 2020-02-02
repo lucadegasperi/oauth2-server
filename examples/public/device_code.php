@@ -7,6 +7,8 @@
  * @link      https://github.com/thephpleague/oauth2-server
  */
 
+error_reporting(E_ALL & ~E_USER_NOTICE);
+
 include __DIR__ . '/../vendor/autoload.php';
 
 use League\OAuth2\Server\AuthorizationServer;
@@ -125,6 +127,7 @@ $app->get('/device_activate', function (ServerRequestInterface $request, Respons
 });
 
 $app->post('/device_activate', function (ServerRequestInterface $request, ResponseInterface $response) use ($app) {
+
     $deviceCodeCache = new DeviceCodeCache();
     $userCode = $request->getParsedBody()['user_code'];
 

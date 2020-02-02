@@ -26,6 +26,16 @@ trait DeviceCodeTrait
     private $verificationUri;
 
     /**
+     * @var DateTimeImmutable
+     */
+    private $lastPollingTime;
+
+    /**
+     * @var DateTimeImmutable
+     */
+    private $pollingInterval = 5;
+
+    /**
      * @return string
      */
     public function getUserCode()
@@ -57,6 +67,32 @@ trait DeviceCodeTrait
     public function setVerificationUri($verificationUri)
     {
         $this->verificationUri = $verificationUri;
+    }
+
+    /**
+     * @return int
+     */
+    public function pollingTooFast()
+    {
+        $now = new DateTimeImmutable;
+
+        if(\is_null($lastPolling = $this->lastPollingTime)) {
+            $this->lastPollingTime = $now;
+
+            return false;
+        }
+
+        $lapse = $now->getTimestamp() - $this->lastPollingTime->getTimestamp();
+
+        if($lapse < $this->pollingInterval) {
+            // $this->pollingInterval += 1; // add 1 seccond.
+
+            return $this->pollingInterval;
+        }
+
+        $this->lastPollingTime = $now;
+
+        return false;
     }
 
     /**

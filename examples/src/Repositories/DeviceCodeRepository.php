@@ -39,6 +39,15 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
     /**
      * {@inheritdoc}
      */
+    public function saveDeviceCode(DeviceCodeEntityInterface $deviceCodeEntity)
+    {
+        // Some logic to persist a new device code to a database
+        $this->deviceCodeCache->store($deviceCodeEntity);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function persistNewDeviceCode(DeviceCodeEntityInterface $deviceCodeEntity)
     {
         // Some logic to persist a new device code to a database

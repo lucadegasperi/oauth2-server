@@ -158,11 +158,17 @@ class DeviceCodeGrant extends AbstractGrant
         $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
         $deviceCode = $this->validateDeviceCode($request, $client);
 
-        // TODO: if the request is too fast, respond with slow down
-
-
-        // if device code has no user associated, respond with pending
+        // Authorization still pending
         if (\is_null($deviceCode->getUserIdentifier())) {
+            $slowDownSeconds = $deviceCode->pollingTooFast();
+            $this->deviceCodeRepository->saveDeviceCode($deviceCode);
+
+            if ($slowDownSeconds) {
+                // if the request is too fast, respond with slow down
+                throw OAuthServerException::slowDown($slowDownSeconds);
+            }
+
+            // if device code has no user associated, respond with pending
             throw OAuthServerException::authorizationPending();
         }
 

@@ -17,4 +17,12 @@ use League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
 class DeviceCodeEntity implements DeviceCodeEntityInterface
 {
     use EntityTrait, DeviceCodeTrait, TokenEntityTrait;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserCode($userCode)
+    {
+        $this->userCode = substr_replace($userCode, '-', 4, 0);
+    }
 }

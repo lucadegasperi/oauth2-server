@@ -3,6 +3,7 @@
 phpunit.xml
 .idea
 /examples/vendor
+/examples/cache/*
 examples/public.key
 examples/private.key
 build

@@ -46,8 +46,10 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
             $deviceCodeEntity->getIdentifier(),
             [
                 'id' => $deviceCodeEntity->getIdentifier(),
+                'user_id' => null,
                 'user_code' => $deviceCodeEntity->getUserCode(),
                 'client_id' => $deviceCodeEntity->getClient()->getIdentifier(),
+                'revoked' => false,
                 'scopes' => $deviceCodeEntity->getScopes(),
                 'expires_at' => $deviceCodeEntity->getExpiryDateTime(),
             ]
@@ -71,7 +73,7 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
         }
 
         // The user identifier should be set when the user authenticates on the OAuth server
-        $deviceCodeEntity->setUserIdentifier(1);
+        $deviceCodeEntity->setUserIdentifier($record['user_id']);
 
         return $deviceCodeEntity;
     }
@@ -95,10 +97,6 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
     {
         $record = self::getCache($deviceCode);
 
-        if(isset($record['revoked'])) {
-            return $record['revoked'] === true;
-        }
-
-        return false;
+        return $record['revoked'] === true;
     }
 }

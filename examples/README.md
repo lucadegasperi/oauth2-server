@@ -54,7 +54,7 @@ curl -X "POST" "http://localhost:4444/refresh_token.php/access_token" \
 
 ## Testing the device authorization grant example
 
-Send the following cURL request. This will return a device code which can be exchanged for an access token.
+Send the following cURL request. This will return a device code which can be exchanged for an access token:
 
 ```
 curl -X "POST" "http://localhost:4444/device_code.php/device_authorization" \
@@ -63,12 +63,18 @@ curl -X "POST" "http://localhost:4444/device_code.php/device_authorization" \
 	--data-urlencode "client_id=myawesomeapp" \
 	--data-urlencode "client_secret=abc123" \
 	--data-urlencode "scope=basic email"
-```	
+```
 
-We have set up the example so that a user ID is already associated with the device code. In a production application you
-would implement an authorization view to allow a user to authorize the device.
+Now using the `user_code` from the response activate the device via the browser `http://localhost:4444/device_code.php/device_activate` or send the following cURL request:
 
-Issue the following cURL request to exchange your device code for an access token. Replace `{{DEVICE_CODE}}` with the 
+```
+curl -X "POST" "http://localhost:4444/device_code.php/device_activate" \
+	-H "Content-Type: application/x-www-form-urlencoded" \
+	-H "Accept: 1.0" \
+	--data-urlencode "user_code={{USER_CODE}}"
+```
+
+Issue the following cURL request to exchange your device code for an access token. Replace `{{DEVICE_CODE}}` with the
 device code returned from your first cURL post:
 
 ```

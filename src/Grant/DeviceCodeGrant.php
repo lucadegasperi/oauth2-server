@@ -158,11 +158,14 @@ class DeviceCodeGrant extends AbstractGrant
         $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
         $deviceCode = $this->validateDeviceCode($request, $client);
 
-        // TODO: if the request is too fast, respond with slow down
-
-
-        // if device code has no user associated, respond with pending
+        // Authorization still pending
         if (\is_null($deviceCode->getUserIdentifier())) {
+            if ($slowDown = $deviceCode->checkPollingRateInterval(new DateTimeImmutable)) {
+                // if the request is polled too fast, respond with slow down
+                throw OAuthServerException::slowDown($slowDown);
+            }
+
+            // if device code has no user associated, respond with pending
             throw OAuthServerException::authorizationPending();
         }
 
@@ -300,6 +303,7 @@ class DeviceCodeGrant extends AbstractGrant
         $maxGenerationAttempts = self::MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS;
 
         $deviceCode = $this->deviceCodeRepository->getNewDeviceCode();
+        $deviceCode->setPollingInterval($this->retryInterval);
         $deviceCode->setExpiryDateTime((new DateTimeImmutable())->add($deviceCodeTTL));
         $deviceCode->setClient($client);
         $deviceCode->setVerificationUri($verificationUri);

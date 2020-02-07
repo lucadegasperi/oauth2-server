@@ -7,6 +7,8 @@
  * @link      https://github.com/thephpleague/oauth2-server
  */
 
+error_reporting(E_ALL & ~E_USER_NOTICE);
+
 include __DIR__ . '/../vendor/autoload.php';
 
 use League\OAuth2\Server\AuthorizationServer;

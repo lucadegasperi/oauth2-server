@@ -51,6 +51,8 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
                 'client_id' => $deviceCodeEntity->getClient()->getIdentifier(),
                 'revoked' => false,
                 'scopes' => $deviceCodeEntity->getScopes(),
+                'polling_interval' => $deviceCodeEntity->getPollingInterval(),
+                'last_polled_at' => $deviceCodeEntity->getLastPolledTime(),
                 'expires_at' => $deviceCodeEntity->getExpiryDateTime(),
             ]
         );
@@ -72,8 +74,9 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
             $deviceCodeEntity->addScope($scope);
         }
 
-        // The user identifier should be set when the user authenticates on the OAuth server
         $deviceCodeEntity->setUserIdentifier($record['user_id']);
+        $deviceCodeEntity->setLastPolledTime($record['last_polled_at']);
+        $deviceCodeEntity->setPollingInterval($record['polling_interval']);
 
         return $deviceCodeEntity;
     }

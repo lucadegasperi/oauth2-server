@@ -145,8 +145,8 @@ class DeviceCodeGrant extends AbstractGrant
     ) {
         // Validate request
         $client = $this->validateClient($request);
-        $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
         $deviceCodeEntity = $this->validateDeviceCode($request, $client);
+        $scopes = $deviceCodeEntity->getScopes();
 
         // Authorization still pending
         if (\is_null($deviceCodeEntity->getUserIdentifier())) {

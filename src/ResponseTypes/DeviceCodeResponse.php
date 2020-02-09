@@ -44,7 +44,7 @@ class DeviceCodeResponse extends AbstractResponseType
 
         // Optional
         if ($verificationUri = $responseParams['verification_uri']){
-            $responseParams['verification_uri_complete'] = $verificationUri . '?code=' . $responseParams['user_code'];
+            $responseParams['verification_uri_complete'] = $verificationUri . '?user_code=' . $responseParams['user_code'];
         }
         $responseParams['interval'] = $this->deviceCode->getRetryInterval();
 

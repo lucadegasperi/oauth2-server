@@ -34,31 +34,27 @@ interface DeviceCodeRepositoryInterface extends RepositoryInterface
     /**
      * Get a device code entity.
      *
-     * @param string                $deviceCode
+     * @param string                $deviceCodeId
      * @param string                $grantType
      * @param ClientEntityInterface $clientEntity
      *
      * @return DeviceCodeEntityInterface|null
      */
-    public function getDeviceCodeEntityByDeviceCode(
-        $deviceCode,
-        $grantType,
-        ClientEntityInterface $clientEntity
-    );
+    public function getDeviceCodeByIdentifier($deviceCodeId, $grantType, ClientEntityInterface $clientEntity);
 
     /**
      * Revoke a device code.
      *
-     * @param string $codeId
+     * @param string $deviceCodeId
      */
-    public function revokeDeviceCode($codeId);
+    public function revokeDeviceCode($deviceCodeId);
 
     /**
      * Check if the device code has been revoked.
      *
-     * @param string $codeId
+     * @param string $deviceCodeId
      *
      * @return bool Return true if this code has been revoked
      */
-    public function isDeviceCodeRevoked($codeId);
+    public function isDeviceCodeRevoked($deviceCodeId);
 }

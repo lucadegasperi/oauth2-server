@@ -9,6 +9,7 @@
 
 namespace OAuth2ServerExamples\Entities;
 
+use DateTimeImmutable;
 use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
 use League\OAuth2\Server\Entities\Traits\DeviceCodeTrait;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;
@@ -17,7 +18,9 @@ use OAuth2ServerExamples\Repositories\DeviceCodeRepository;
 
 class DeviceCodeEntity implements DeviceCodeEntityInterface
 {
-    use EntityTrait, DeviceCodeTrait, TokenEntityTrait;
+    use EntityTrait, TokenEntityTrait, DeviceCodeTrait {
+        checkRetryFrequency as parentCheckRetryFrequency;
+    }
 
     /**
      * {@inheritdoc}
@@ -30,33 +33,19 @@ class DeviceCodeEntity implements DeviceCodeEntityInterface
     /**
      * {@inheritdoc}
      */
-    public function setLastPolledTime($lastPolledTime)
+    public function checkRetryFrequency(DateTimeImmutable $nowDateTime)
     {
-        $this->lastPolledTime = $lastPolledTime;
+        $slowDownSeconds = $this->parentCheckRetryFrequency($nowDateTime);
 
-        if($deviceCode = $this->getIdentifier()) {
+        if ($slowDownSeconds) {
+            $slowDownSeconds = ceil($slowDownSeconds * 2.0);
             DeviceCodeRepository::setCache(
-                'last_polled_at',
-                $lastPolledTime,
-                $deviceCode
+                'retry_interval',
+                $slowDownSeconds,
+                $this->getIdentifier()
             );
         }
+
+        return $slowDownSeconds;
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setPollingInterval($pollingInterval)
-    {
-        $this->pollingInterval = $pollingInterval;
-
-        if($deviceCode = $this->getIdentifier()) {
-            DeviceCodeRepository::setCache(
-                'polling_interval',
-                $pollingInterval,
-                $deviceCode
-            );
-        }
-    }
-
 }

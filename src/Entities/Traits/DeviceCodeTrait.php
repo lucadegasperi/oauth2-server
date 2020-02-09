@@ -26,14 +26,14 @@ trait DeviceCodeTrait
     private $verificationUri;
 
     /**
-     * @var DateTimeImmutable
-     */
-    private $lastPolledTime;
-
-    /**
      * @var int
      */
-    private $pollingInterval;
+    private $retryInterval;
+
+    /**
+     * @var DateTimeImmutable
+     */
+    private $lastPolledDateTime;
 
     /**
      * @return string
@@ -70,64 +70,56 @@ trait DeviceCodeTrait
     }
 
     /**
-     * @return DateTimeImmutable
-     */
-    public function getLastPolledTime()
-    {
-        return $this->lastPolledTime;
-    }
-
-    /**
-     * @param DateTimeImmutable $lastPolledTime
-     */
-    public function setLastPolledTime($lastPolledTime)
-    {
-        $this->lastPolledTime = $lastPolledTime;
-    }
-
-    /**
      * @return int
      */
-    public function getPollingInterval()
+    public function getRetryInterval()
     {
-        return $this->pollingInterval;
+        return $this->retryInterval;
     }
 
     /**
-     * @param int $seconds
+     * @param int $retryInterval
      */
-    public function setPollingInterval($seconds)
+    public function setRetryInterval($retryInterval)
     {
-        $this->pollingInterval = $seconds;
+        $this->retryInterval = $retryInterval;
     }
 
     /**
-     * @param DateTimeImmutable $polledTime
-     * @param int               $slowDownSeconds
-     *
-     * @return int
+     * @return DateTimeImmutable|null
      */
-    public function checkPollingRateInterval($polledTime, $slowDownSeconds = 0)
+    public function getLastPolledDateTime()
     {
-        if($this->lastPolledTime === null) {
-            $this->setLastPolledTime($polledTime);
+        return $this->lastPolledDateTime;
+    }
 
-            return $slowDownSeconds;
+    /**
+     * @param DateTimeImmutable $lastPolledDateTime
+     */
+    public function setLastPolledDateTime($lastPolledDateTime)
+    {
+        $this->lastPolledDateTime = $lastPolledDateTime;
+    }
+
+    /**
+     * @param DateTimeImmutable  $nowDateTime
+     * @return int  Slow-down in seconds for the retry interval.
+     */
+    public function checkRetryFrequency(DateTimeImmutable $nowDateTime)
+    {
+        $retryInterval = $this->getRetryInterval();
+
+        if($lastPolleDateTime = $this->getLastPolledDateTime()) {
+            // Seconds passed since last retry.
+            $nowTimestamp = $nowDateTime->getTimestamp();
+            $lastPollingTimestamp = $lastPolleDateTime->getTimestamp();
+
+            if($retryInterval > $nowTimestamp - $lastPollingTimestamp) {
+                return $retryInterval; // polling to fast.
+            }
         }
 
-        // Seconds passed since last retry.
-        $lapsedTime = $this->lastPolledTime->getTimestamp() - $polledTime->getTimestamp();
-
-        if($this->pollingInterval > $lapsedTime) {
-            // Slow down logic this can be moved to
-            // Examples and here only return default rate 5.
-            $slowDownSeconds = ceil($this->pollingInterval * 1.1);
-        }
-
-        $this->setLastPolledTime($polledTime);
-        $this->setPollingInterval($slowDownSeconds);
-
-        return $slowDownSeconds;
+        return $slowDownSeconds = 0;
     }
 
     /**

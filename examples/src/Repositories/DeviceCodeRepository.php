@@ -9,15 +9,18 @@
 
 namespace OAuth2ServerExamples\Repositories;
 
+use DateTimeImmutable;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
 use League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface;
+use OAuth2ServerExamples\Entities\ScopeEntity as Scope;
 use OAuth2ServerExamples\Entities\DeviceCodeEntity;
 use OAuth2ServerExamples\Traits\CanStoreInCache;
+use OAuth2ServerExamples\Traits\FormatsScopesForStorage;
 
 class DeviceCodeRepository implements DeviceCodeRepositoryInterface
 {
-    use CanStoreInCache;
+    use CanStoreInCache, FormatsScopesForStorage;
 
     /**
      * @var string
@@ -29,7 +32,7 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
      */
     public function getNewDeviceCode()
     {
-        return new DeviceCodeEntity();
+        return new DeviceCodeEntity;
     }
 
     /**
@@ -46,13 +49,13 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
             $deviceCodeEntity->getIdentifier(),
             [
                 'id' => $deviceCodeEntity->getIdentifier(),
-                'user_id' => null,
                 'user_code' => $deviceCodeEntity->getUserCode(),
+                'user_id' => null,
                 'client_id' => $deviceCodeEntity->getClient()->getIdentifier(),
+                'scopes' => $this->scopesToArray($deviceCodeEntity->getScopes()),
                 'revoked' => false,
-                'scopes' => $deviceCodeEntity->getScopes(),
-                'polling_interval' => $deviceCodeEntity->getPollingInterval(),
-                'last_polled_at' => $deviceCodeEntity->getLastPolledTime(),
+                'retry_interval' => $deviceCodeEntity->getRetryInterval(),
+                'last_polled_at' => $deviceCodeEntity->getLastPolledDateTime(),
                 'expires_at' => $deviceCodeEntity->getExpiryDateTime(),
             ]
         );
@@ -61,22 +64,24 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
     /**
      * {@inheritdoc}
      */
-    public function getDeviceCodeEntityByDeviceCode($deviceCode, $grantType, ClientEntityInterface $clientEntity)
+    public function getDeviceCodeByIdentifier($deviceCodeId, $grantType, ClientEntityInterface $clientEntity)
     {
-        $record = self::getCache($deviceCode);
+        $deviceCode = (object) self::getCache($deviceCodeId);
 
         $deviceCodeEntity = $this->getNewDeviceCode();
-        $deviceCodeEntity->setIdentifier($record['id']);
-        $deviceCodeEntity->setUserCode($record['user_code']);
-        $deviceCodeEntity->setClient($clientEntity);
+        $deviceCodeEntity->setIdentifier($deviceCode->id);
+        $deviceCodeEntity->setUserCode($deviceCode->user_code);
+        $deviceCodeEntity->setUserIdentifier($deviceCode->user_id);
+        $deviceCodeEntity->setRetryInterval($deviceCode->retry_interval);
+        $deviceCodeEntity->setLastPolledDateTime($deviceCode->last_polled_at);
 
-        foreach ($record['scopes'] as $scope) {
-            $deviceCodeEntity->addScope($scope);
+        foreach ($deviceCode->scopes as $scope) {
+            $deviceCodeEntity->addScope(new Scope($scope));
         }
 
-        $deviceCodeEntity->setUserIdentifier($record['user_id']);
-        $deviceCodeEntity->setLastPolledTime($record['last_polled_at']);
-        $deviceCodeEntity->setPollingInterval($record['polling_interval']);
+        $deviceCodeEntity->setClient($clientEntity);
+
+        self::setCache('last_polled_at', new DateTimeImmutable, $deviceCode->id);
 
         return $deviceCodeEntity;
     }
@@ -84,22 +89,20 @@ class DeviceCodeRepository implements DeviceCodeRepositoryInterface
     /**
      * {@inheritdoc}
      */
-    public function revokeDeviceCode($deviceCode)
+    public function revokeDeviceCode($deviceCodeId)
     {
-        $record = self::getCache($deviceCode);
+        $deviceCode = (object) self::getCache($deviceCodeId);
 
-        $record['revoked'] = true;
-
-        self::storeInCache($deviceCode, $record);
+        self::setCache('revoked', true, $deviceCode->id);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function isDeviceCodeRevoked($deviceCode)
+    public function isDeviceCodeRevoked($deviceCodeId)
     {
-        $record = self::getCache($deviceCode);
+        $deviceCode = self::getCache($deviceCodeId);
 
-        return $record['revoked'] === true;
+        return $deviceCode['revoked'] === true;
     }
 }

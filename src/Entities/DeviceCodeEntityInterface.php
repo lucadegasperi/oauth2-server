@@ -9,6 +9,8 @@
 
 namespace League\OAuth2\Server\Entities;
 
+use DateTimeImmutable;
+
 interface DeviceCodeEntityInterface extends TokenInterface
 {
     /**
@@ -17,7 +19,7 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getUserCode();
 
     /**
-     * @param string $userCode
+     * @param string  $userCode
      */
     public function setUserCode($userCode);
 
@@ -27,7 +29,33 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getVerificationUri();
 
     /**
-     * @param string $verificationUri
+     * @param string  $verificationUri
      */
     public function setVerificationUri($verificationUri);
+
+    /**
+     * @return int
+     */
+    public function getRetryInterval();
+
+    /**
+     * @param int  $retryInterval
+     */
+    public function setRetryInterval($retryInterval);
+
+    /**
+     * @return DateTimeImmutable
+     */
+    public function getLastPolledDateTime();
+
+    /**
+     * @param DateTimeImmutable  $lastPolledDateTime
+     */
+    public function setLastPolledDateTime(DateTimeImmutable $lastPolledDateTime);
+
+    /**
+     * @param DateTimeImmutable  $nowDateTime
+     * @return int  Slow-down in seconds for the retry interval.
+     */
+    public function checkRetryFrequency(DateTimeImmutable $nowDateTime);
 }

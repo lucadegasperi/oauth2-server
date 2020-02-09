@@ -11,24 +11,24 @@
 
 namespace League\OAuth2\Server\Grant;
 
-use DateInterval;
-use DateTimeImmutable;
 use Error;
+use TypeError;
 use Exception;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
+use DateInterval;
+use LogicException;
+use DateTimeImmutable;
+use League\OAuth2\Server\RequestEvent;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
-use League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
+use League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
+use League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
+use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use League\OAuth2\Server\RequestTypes\DeviceAuthorizationRequest;
 use League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface;
 use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use League\OAuth2\Server\RequestEvent;
-use League\OAuth2\Server\RequestTypes\DeviceAuthorizationRequest;
-use League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
-use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use LogicException;
+use League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
 use Psr\Http\Message\ServerRequestInterface;
-use TypeError;
 
 /**
  * Device Code grant class.
@@ -69,9 +69,7 @@ class DeviceCodeGrant extends AbstractGrant
     ) {
         $this->setDeviceCodeRepository($deviceCodeRepository);
         $this->setRefreshTokenRepository($refreshTokenRepository);
-
         $this->refreshTokenTTL = new DateInterval('P1M');
-
         $this->deviceCodeTTL = $deviceCodeTTL;
         $this->retryInterval = $retryInterval;
     }
@@ -89,20 +87,14 @@ class DeviceCodeGrant extends AbstractGrant
      */
     public function validateDeviceAuthorizationRequest(ServerRequestInterface $request)
     {
-        $clientId = $this->getRequestParameter(
-            'client_id',
-            $request,
-            $this->getServerParameter('PHP_AUTH_USER', $request)
-        );
+        $clientId = $this->getRequestParameter('client_id', $request, $this->getServerParameter('PHP_AUTH_USER', $request));
 
         if ($clientId === null) {
             throw OAuthServerException::invalidRequest('client_id');
         }
 
         $client = $this->getClientEntityOrFail($clientId, $request);
-
         $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
-
         $deviceAuthorizationRequest = new DeviceAuthorizationRequest();
         $deviceAuthorizationRequest->setGrantTypeId($this->getIdentifier());
         $deviceAuthorizationRequest->setClient($client);
@@ -116,22 +108,20 @@ class DeviceCodeGrant extends AbstractGrant
      */
     public function completeDeviceAuthorizationRequest(DeviceAuthorizationRequest $deviceRequest)
     {
-        $deviceCode = $this->issueDeviceCode(
+        $deviceCodeEntity = $this->issueDeviceCode(
             $this->deviceCodeTTL,
             $deviceRequest->getClient(),
             $this->verificationUri,
             $deviceRequest->getScopes()
         );
-
         $payload = [
-            'client_id' => $deviceCode->getClient()->getIdentifier(),
-            'device_code_id' => $deviceCode->getIdentifier(),
-            'scopes' => $deviceCode->getScopes(),
-            'user_code' => $deviceCode->getUserCode(),
-            'expire_time' => $deviceCode->getExpiryDateTime()->getTimestamp(),
-            'verification_uri' => $deviceCode->getVerificationUri(),
+            'client_id' => $deviceCodeEntity->getClient()->getIdentifier(),
+            'device_code_id' => $deviceCodeEntity->getIdentifier(),
+            'scopes' => $deviceCodeEntity->getScopes(),
+            'user_code' => $deviceCodeEntity->getUserCode(),
+            'expire_time' => $deviceCodeEntity->getExpiryDateTime()->getTimestamp(),
+            'verification_uri' => $deviceCodeEntity->getVerificationUri(),
         ];
-
         $jsonPayload = \json_encode($payload);
 
         if ($jsonPayload === false) {
@@ -139,7 +129,7 @@ class DeviceCodeGrant extends AbstractGrant
         }
 
         $response = new DeviceCodeResponse();
-        $response->setDeviceCode($deviceCode);
+        $response->setDeviceCode($deviceCodeEntity);
         $response->setPayload($this->encrypt($jsonPayload));
 
         return $response;
@@ -156,24 +146,22 @@ class DeviceCodeGrant extends AbstractGrant
         // Validate request
         $client = $this->validateClient($request);
         $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
-        $deviceCode = $this->validateDeviceCode($request, $client);
+        $deviceCodeEntity = $this->validateDeviceCode($request, $client);
 
         // Authorization still pending
-        if (\is_null($deviceCode->getUserIdentifier())) {
-            if ($slowDown = $deviceCode->checkPollingRateInterval(new DateTimeImmutable)) {
-                // if the request is polled too fast, respond with slow down
-                throw OAuthServerException::slowDown($slowDown);
+        if (\is_null($deviceCodeEntity->getUserIdentifier())) {
+            if ($slowDownRetry = $deviceCodeEntity->checkRetryFrequency(new DateTimeImmutable)) {
+                // if the request is polled too fast, respond with slow down seconds
+                throw OAuthServerException::slowDown($slowDownRetry);
             }
-
             // if device code has no user associated, respond with pending
             throw OAuthServerException::authorizationPending();
         }
 
         // Finalize the requested scopes
-        $finalizedScopes = $this->scopeRepository->finalizeScopes($scopes, $this->getIdentifier(), $client, (string) $deviceCode->getUserIdentifier());
-
+        $finalizedScopes = $this->scopeRepository->finalizeScopes($scopes, $this->getIdentifier(), $client, (string) $deviceCodeEntity->getUserIdentifier());
         // Issue and persist new access token
-        $accessToken = $this->issueAccessToken($accessTokenTTL, $client, (string) $deviceCode->getUserIdentifier(), $finalizedScopes);
+        $accessToken = $this->issueAccessToken($accessTokenTTL, $client, (string) $deviceCodeEntity->getUserIdentifier(), $finalizedScopes);
         $this->getEmitter()->emit(new RequestEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request));
         $responseType->setAccessToken($accessToken);
 
@@ -185,7 +173,9 @@ class DeviceCodeGrant extends AbstractGrant
             $responseType->setRefreshToken($refreshToken);
         }
 
-        $this->deviceCodeRepository->revokeDeviceCode($deviceCode->getIdentifier());
+        $this->deviceCodeRepository->revokeDeviceCode(
+            $deviceCodeEntity->getIdentifier()
+        );
 
         return $responseType;
     }
@@ -224,19 +214,19 @@ class DeviceCodeGrant extends AbstractGrant
             throw OAuthServerException::invalidRequest('device_code', 'Device code was not issued to this client');
         }
 
-        $deviceCode = $this->deviceCodeRepository->getDeviceCodeEntityByDeviceCode(
+        $deviceCodeEntity = $this->deviceCodeRepository->getDeviceCodeByIdentifier(
             $deviceCodePayload->device_code_id,
             $this->getIdentifier(),
             $client
         );
 
-        if ($deviceCode instanceof DeviceCodeEntityInterface === false) {
+        if ($deviceCodeEntity instanceof DeviceCodeEntityInterface === false) {
             $this->getEmitter()->emit(new RequestEvent(RequestEvent::USER_AUTHENTICATION_FAILED, $request));
 
             throw OAuthServerException::invalidGrant();
         }
 
-        return $deviceCode;
+        return $deviceCodeEntity;
     }
 
     /**
@@ -302,23 +292,23 @@ class DeviceCodeGrant extends AbstractGrant
     ) {
         $maxGenerationAttempts = self::MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS;
 
-        $deviceCode = $this->deviceCodeRepository->getNewDeviceCode();
-        $deviceCode->setPollingInterval($this->retryInterval);
-        $deviceCode->setExpiryDateTime((new DateTimeImmutable())->add($deviceCodeTTL));
-        $deviceCode->setClient($client);
-        $deviceCode->setVerificationUri($verificationUri);
+        $deviceCodeEntity = $this->deviceCodeRepository->getNewDeviceCode();
+        $deviceCodeEntity->setRetryInterval($this->retryInterval);
+        $deviceCodeEntity->setExpiryDateTime((new DateTimeImmutable())->add($deviceCodeTTL));
+        $deviceCodeEntity->setClient($client);
+        $deviceCodeEntity->setVerificationUri($verificationUri);
 
         foreach ($scopes as $scope) {
-            $deviceCode->addScope($scope);
+            $deviceCodeEntity->addScope($scope);
         }
 
         while ($maxGenerationAttempts-- > 0) {
-            $deviceCode->setIdentifier($this->generateUniqueIdentifier());
-            $deviceCode->setUserCode($this->generateUniqueUserCode());
+            $deviceCodeEntity->setIdentifier($this->generateUniqueIdentifier());
+            $deviceCodeEntity->setUserCode($this->generateUniqueUserCode());
             try {
-                $this->deviceCodeRepository->persistNewDeviceCode($deviceCode);
+                $this->deviceCodeRepository->persistNewDeviceCode($deviceCodeEntity);
 
-                return $deviceCode;
+                return $deviceCodeEntity;
             } catch (UniqueTokenIdentifierConstraintViolationException $e) {
                 if ($maxGenerationAttempts === 0) {
                     throw $e;

@@ -3,6 +3,9 @@
 namespace LeagueTests;
 
 use DateInterval;
+use Laminas\Diactoros\Response;
+use Laminas\Diactoros\ServerRequest;
+use Laminas\Diactoros\ServerRequestFactory;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\Exception\OAuthServerException;
@@ -23,9 +26,6 @@ use LeagueTests\Stubs\StubResponseType;
 use LeagueTests\Stubs\UserEntity;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Zend\Diactoros\Response;
-use Zend\Diactoros\ServerRequest;
-use Zend\Diactoros\ServerRequestFactory;
 
 class AuthorizationServerTest extends TestCase
 {
@@ -64,6 +64,7 @@ class AuthorizationServerTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setConfidential();
+        $client->setRedirectUri('http://foo/bar');
 
         $clientRepository = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepository->method('getClientEntity')->willReturn($client);
@@ -284,6 +285,8 @@ class AuthorizationServerTest extends TestCase
     public function testValidateAuthorizationRequestWithMissingRedirectUri()
     {
         $client = new ClientEntity();
+        $client->setConfidential();
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 

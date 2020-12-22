@@ -3,6 +3,7 @@
 namespace LeagueTests\Grant;
 
 use DateInterval;
+use Laminas\Diactoros\ServerRequest;
 use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\AuthCodeEntityInterface;
@@ -20,7 +21,6 @@ use LeagueTests\Stubs\ClientEntity;
 use LeagueTests\Stubs\RefreshTokenEntity;
 use LeagueTests\Stubs\ScopeEntity;
 use PHPUnit\Framework\TestCase;
-use Zend\Diactoros\ServerRequest;
 
 class AbstractGrantTest extends TestCase
 {
@@ -92,6 +92,7 @@ class AbstractGrantTest extends TestCase
     public function testValidateClientPublic()
     {
         $client = new ClientEntity();
+        $client->setRedirectUri('http://foo/bar');
 
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
@@ -116,6 +117,7 @@ class AbstractGrantTest extends TestCase
     public function testValidateClientConfidential()
     {
         $client = new ClientEntity();
+        $client->setRedirectUri('http://foo/bar');
 
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
@@ -127,9 +129,9 @@ class AbstractGrantTest extends TestCase
         $abstractGrantReflection = new \ReflectionClass($grantMock);
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
-            'redirect_uri'  => 'http://foo/bar',
+            'redirect_uri' => 'http://foo/bar',
         ]);
 
         $validateClientMethod = $abstractGrantReflection->getMethod('validateClient');
@@ -195,7 +197,7 @@ class AbstractGrantTest extends TestCase
         $abstractGrantReflection = new \ReflectionClass($grantMock);
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'foo',
         ]);
 
@@ -221,7 +223,7 @@ class AbstractGrantTest extends TestCase
         $abstractGrantReflection = new \ReflectionClass($grantMock);
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'    => 'foo',
+            'client_id' => 'foo',
             'redirect_uri' => 'http://bar/foo',
         ]);
 
@@ -247,7 +249,7 @@ class AbstractGrantTest extends TestCase
         $abstractGrantReflection = new \ReflectionClass($grantMock);
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'    => 'foo',
+            'client_id' => 'foo',
             'redirect_uri' => 'http://bar/foo',
         ]);
 
@@ -271,7 +273,7 @@ class AbstractGrantTest extends TestCase
         $abstractGrantReflection = new \ReflectionClass($grantMock);
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
         ]);
 

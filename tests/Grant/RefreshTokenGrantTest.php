@@ -3,6 +3,7 @@
 namespace LeagueTests\Grant;
 
 use DateInterval;
+use Laminas\Diactoros\ServerRequest;
 use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
@@ -18,7 +19,6 @@ use LeagueTests\Stubs\RefreshTokenEntity;
 use LeagueTests\Stubs\ScopeEntity;
 use LeagueTests\Stubs\StubResponseType;
 use PHPUnit\Framework\TestCase;
-use Zend\Diactoros\ServerRequest;
 
 class RefreshTokenGrantTest extends TestCase
 {
@@ -44,6 +44,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -70,21 +72,21 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
-            'scopes'        => ['foo'],
+            'scopes' => ['foo'],
         ]);
 
         $responseType = new StubResponseType();
@@ -98,6 +100,7 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
 
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
@@ -126,21 +129,21 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
-            'scopes'        => ['foo'],
+            'scopes' => ['foo'],
         ]);
 
         $responseType = new StubResponseType();
@@ -154,6 +157,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -180,21 +185,21 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo', 'bar'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo', 'bar'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
-            'scope'         => 'foo',
+            'scope' => 'foo',
         ]);
 
         $responseType = new StubResponseType();
@@ -208,6 +213,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -232,21 +239,21 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo', 'bar'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo', 'bar'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
-            'scope'         => 'foobar',
+            'scope' => 'foobar',
         ]);
 
         $responseType = new StubResponseType();
@@ -261,6 +268,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -274,7 +283,7 @@ class RefreshTokenGrantTest extends TestCase
         $grant->setPrivateKey(new CryptKey('file://' . __DIR__ . '/../Stubs/private.key'));
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
         ]);
 
@@ -290,6 +299,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -305,7 +316,7 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = 'foobar';
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
         ]);
@@ -322,6 +333,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -340,18 +353,18 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'bar',
+                    'client_id' => 'bar',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
         ]);
@@ -368,6 +381,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -383,18 +398,18 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() - 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo'],
+                    'user_id' => 123,
+                    'expire_time' => \time() - 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
         ]);
@@ -411,6 +426,8 @@ class RefreshTokenGrantTest extends TestCase
     {
         $client = new ClientEntity();
         $client->setIdentifier('foo');
+        $client->setRedirectUri('http://foo/bar');
+
         $clientRepositoryMock = $this->getMockBuilder(ClientRepositoryInterface::class)->getMock();
         $clientRepositoryMock->method('getClientEntity')->willReturn($client);
 
@@ -427,18 +444,18 @@ class RefreshTokenGrantTest extends TestCase
         $oldRefreshToken = $this->cryptStub->doEncrypt(
             \json_encode(
                 [
-                    'client_id'        => 'foo',
+                    'client_id' => 'foo',
                     'refresh_token_id' => 'zyxwvu',
-                    'access_token_id'  => 'abcdef',
-                    'scopes'           => ['foo'],
-                    'user_id'          => 123,
-                    'expire_time'      => \time() + 3600,
+                    'access_token_id' => 'abcdef',
+                    'scopes' => ['foo'],
+                    'user_id' => 123,
+                    'expire_time' => \time() + 3600,
                 ]
             )
         );
 
         $serverRequest = (new ServerRequest())->withParsedBody([
-            'client_id'     => 'foo',
+            'client_id' => 'foo',
             'client_secret' => 'bar',
             'refresh_token' => $oldRefreshToken,
         ]);

@@ -3,12 +3,12 @@
 namespace LeagueTests\Exception;
 
 use Exception;
+use Laminas\Diactoros\Response;
+use Laminas\Diactoros\ServerRequest;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Grant\AbstractGrant;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use PHPUnit\Framework\TestCase;
-use Zend\Diactoros\Response;
-use Zend\Diactoros\ServerRequest;
 
 class OAuthServerExceptionTest extends TestCase
 {
@@ -95,5 +95,12 @@ class OAuthServerExceptionTest extends TestCase
         $exceptionWithoutPrevious = OAuthServerException::accessDenied();
 
         $this->assertNull($exceptionWithoutPrevious->getPrevious());
+    }
+
+    public function testCanGetRedirectionUri()
+    {
+        $exceptionWithRedirect = OAuthServerException::accessDenied('some hint', 'https://example.com/error');
+
+        $this->assertSame('https://example.com/error', $exceptionWithRedirect->getRedirectUri());
     }
 }

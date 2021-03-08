@@ -1,4 +1,5 @@
 <?php
+
 /**
  * OAuth 2.0 Device Code grant.
  *
@@ -154,12 +155,14 @@ class DeviceCodeGrant extends AbstractGrant
                 // if the request is polled too fast, respond with slow down seconds
                 throw OAuthServerException::slowDown($slowDownRetry);
             }
+
             // if device code has no user associated, respond with pending
             throw OAuthServerException::authorizationPending();
         }
 
         // Finalize the requested scopes
         $finalizedScopes = $this->scopeRepository->finalizeScopes($scopes, $this->getIdentifier(), $client, (string) $deviceCodeEntity->getUserIdentifier());
+
         // Issue and persist new access token
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, (string) $deviceCodeEntity->getUserIdentifier(), $finalizedScopes);
         $this->getEmitter()->emit(new RequestEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request));

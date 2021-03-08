@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author      Alex Bilbie <hello@alexbilbie.com>
  * @copyright   Copyright (c) Alex Bilbie
@@ -206,7 +207,7 @@ class OAuthServerException extends Exception
     {
         return new static(
             'The authorization server encountered an unexpected condition which prevented it from fulfilling'
-            . ' the request: ' . $hint,
+                . ' the request: ' . $hint,
             7,
             'server_error',
             500,
@@ -316,9 +317,9 @@ class OAuthServerException extends Exception
     public static function slowDown($slowDown = 5, $hint = null, Throwable $previous = null)
     {
         $serverException = new static(
-            'The the authorization request is still pending and polling should continue, '
+            'The authorization request is still pending and polling should continue, '
                 . 'but the interval MUST be increased by ' . $slowDown
-                    . ' seconds for this and all subsequent requests.',
+                . ' seconds for this and all subsequent requests.',
             12,
             'slow_down',
             400,

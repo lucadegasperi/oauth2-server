@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author      Alex Bilbie <hello@alexbilbie.com>
  * @copyright   Copyright (c) Alex Bilbie
@@ -19,7 +20,7 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getUserCode();
 
     /**
-     * @param string  $userCode
+     * @param string $userCode
      */
     public function setUserCode($userCode);
 
@@ -29,7 +30,7 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getVerificationUri();
 
     /**
-     * @param string  $verificationUri
+     * @param string $verificationUri
      */
     public function setVerificationUri($verificationUri);
 
@@ -39,7 +40,7 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getRetryInterval();
 
     /**
-     * @param int  $retryInterval
+     * @param int $retryInterval
      */
     public function setRetryInterval($retryInterval);
 
@@ -49,13 +50,13 @@ interface DeviceCodeEntityInterface extends TokenInterface
     public function getLastPolledDateTime();
 
     /**
-     * @param DateTimeImmutable  $lastPolledDateTime
+     * @param DateTimeImmutable $lastPolledDateTime
      */
     public function setLastPolledDateTime(DateTimeImmutable $lastPolledDateTime);
 
     /**
-     * @param DateTimeImmutable  $nowDateTime
-     * @return int  Slow-down in seconds for the retry interval.
+     * @param DateTimeImmutable $nowDateTime
+     * @return int Slow-down in seconds for the retry interval.
      */
     public function checkRetryFrequency(DateTimeImmutable $nowDateTime);
 }

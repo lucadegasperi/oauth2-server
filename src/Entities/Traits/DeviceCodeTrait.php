@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author      Alex Bilbie <hello@alexbilbie.com>
  * @copyright   Copyright (c) Alex Bilbie
@@ -102,24 +103,26 @@ trait DeviceCodeTrait
     }
 
     /**
-     * @param DateTimeImmutable  $nowDateTime
-     * @return int  Slow-down in seconds for the retry interval.
+     * @param DateTimeImmutable $nowDateTime
+     * @return int Slow-down in seconds for the retry interval.
      */
     public function checkRetryFrequency(DateTimeImmutable $nowDateTime)
     {
         $retryInterval = $this->getRetryInterval();
+        $lastPolledDateTime = $this->getLastPolledDateTime();
 
-        if($lastPolleDateTime = $this->getLastPolledDateTime()) {
+        if ($lastPolledDateTime) {
+
             // Seconds passed since last retry.
             $nowTimestamp = $nowDateTime->getTimestamp();
-            $lastPollingTimestamp = $lastPolleDateTime->getTimestamp();
+            $lastPollingTimestamp = $lastPolledDateTime->getTimestamp();
 
-            if($retryInterval > $nowTimestamp - $lastPollingTimestamp) {
+            if ($retryInterval > $nowTimestamp - $lastPollingTimestamp) {
                 return $retryInterval; // polling to fast.
             }
         }
 
-        return $slowDownSeconds = 0;
+        return 0;
     }
 
     /**
